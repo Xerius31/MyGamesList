@@ -1,22 +1,23 @@
 package com.insa.mygameslist.data
 
 import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import com.insa.mygameslist.R
 
 object IGDB {
-
-    lateinit var covers: List<Cover>
+    lateinit var games: Map<Long, GameComplete>
 
     fun load(context: Context) {
-        val coversFromJson: List<Cover> = Gson().fromJson(
-            context.resources.openRawResource(R.raw.covers).bufferedReader(),
-            object : TypeToken<List<Cover>>() {}.type
-        )
-
-        covers = coversFromJson
+        IGDBGames.load(context)
+        IGDBCovers.load(context)
+        IGDBGenres.load(context)
+        IGDBPlatforms.load(context)
+        IGDBPlatformsLogo.load(context)
     }
 }
 
-data class Cover(val id: Long, val url: String)
+data class GameComplete(
+    val game: Game,
+    val cover: Cover,
+    val genres: List<Genre>,
+    val plateforms: List<Platform>,
+    val plateformsLogo: List<PlatformLogo>
+)
