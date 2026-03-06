@@ -22,21 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.insa.mygameslist.R
-import com.insa.mygameslist.data.Cover
-import com.insa.mygameslist.data.Game
-import com.insa.mygameslist.data.Genre
+import com.insa.mygameslist.data.GameComplete
 
 @Composable
 fun LoadScreen(
-    games: List<Game>,
-    covers: Map<Long, Cover>,
-    genres: Map<Long, Genre>,
-    innerPadding: PaddingValues,
-    onClick: (Long) -> Unit
+    games: List<GameComplete>, innerPadding: PaddingValues, onClick: (Long) -> Unit
 ) {
     LazyColumn(modifier = Modifier.padding(innerPadding)) {
         items(games) { game ->
-            GameItem(game, covers, genres, onClick)
+            GameItem(game, onClick)
             HorizontalDivider(Modifier.fillMaxWidth(), 3.dp)
         }
     }
@@ -44,17 +38,14 @@ fun LoadScreen(
 
 @Composable
 fun GameItem(
-    game: Game,
-    covers: Map<Long, Cover>,
-    genres: Map<Long, Genre>,
-    onClick: (Long) -> Unit
+    game: GameComplete, onClick: (Long) -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.clickable(onClick = { onClick(game.id) })
     ) {
         AsyncImage(
-            model = "https:${covers[game.cover]?.url}",
+            model = "https:${game.coverUrl}",
             placeholder = painterResource(R.drawable.cover_placeholder),
             error = painterResource(R.drawable.cover_placeholder),
             contentDescription = null
@@ -66,10 +57,8 @@ fun GameItem(
                 textDecoration = TextDecoration.Underline,
                 fontSize = 20.sp
             )
-            val gameGenres =
-                game.genres.joinToString(", ") { genres[it]?.name.toString() }
             Text(
-                "Genres : $gameGenres",
+                "Genres : ${game.genreNames.joinToString(",")}",
                 modifier = Modifier.fillMaxWidth(),
                 overflow = TextOverflow.Ellipsis
             )
@@ -80,32 +69,50 @@ fun GameItem(
 @Preview(showBackground = true)
 @Composable
 fun HomePreview() {
-    val testCovers = listOf(
-        Cover(
-            18872, "//images.igdb.com/igdb/image/upload/t_cover_big/it58smbpvhqhbbubqsj5.jpg"
-        ), Cover(
-            19438, "//images.igdb.com/igdb/image/upload/t_cover_big/ul5wwtyyqzh06j98agmx.jpg"
-        )
-    ).associateBy { it.id }
-
-    val testGenres = listOf(
-        Genre(9, "Puzzle"), Genre(10, "Racing"), Genre(32, "Indie")
-    ).associateBy { it.id }
 
     val testGames = listOf(
-        Game(
-            25910,
-            18872,
-            1478131200,
-            listOf(9, 32),
-            "Mallow Drops",
-            listOf(6, 14, 39),
-            "Mallow Drops is a gravity puzzle where two kiwis regather their eggs in a shattered world. Help Marsh and Mallow rescue their eggs and get to the exit! Turn everything upside down as you slide, shift and move through the tricky world of Mallow Drops, a mix of platformer and a sliding block puzzle. Getting to where you need to go half the fun - just be sure to have a safe landing!\n\nWith Wooly Jumpers hopping about and Dirty Underbears surprising you suddenly, it won\u0027t be easy, and if you\u0027re not careful, the dreaded Dropbears may get the drop on you!\n\nCHANGE YOUR WORLD BY CHANGING YOUR PERSPECTIVE\nYou move in straight lines. Your world turns upside-down.\n\nWhen you turn the world of Mallow Drops, things shift in unexpected ways and new paths are revealed.\n\nMallow Drops is a meditative mix of platformer and a sliding block puzzle coming to Steam in 2016",
-            96.0
-        ), Game(
-            1, 19438, 1478130022, listOf(10), "Youhou", listOf(14, 39), "Youhouu the game!", 86.0
+        GameComplete(
+            id = 25910,
+            coverId = 18872,
+            coverUrl = "//images.igdb.com/igdb/image/upload/t_cover_big/it58smbpvhqhbbubqsj5.jpg",
+            firstReleaseDate = 1478131200,
+            name = "Mallow Drops",
+            summary = "Mallow Drops is a gravity puzzle where two kiwis regather their eggs...",
+            totalRating = 96.0,
+
+            genreIds = listOf(9, 32),
+            genreNames = listOf("Puzzle", "Indie"),
+
+            plateformIds = listOf(6, 14, 39),
+            plateformsNames = listOf("PC", "Mac", "Linux"),
+            plateformsLogoIds = listOf(1, 2, 3),
+            plateformsLogoUrl = listOf(
+                "//images.igdb.com/logo_pc.png",
+                "//images.igdb.com/logo_mac.png",
+                "//images.igdb.com/logo_linux.png"
+            )
+        ), GameComplete(
+            id = 1,
+            coverId = 19438,
+            coverUrl = "//images.igdb.com/igdb/image/upload/t_cover_big/ul5wwtyyqzh06j98agmx.jpg",
+            firstReleaseDate = 1478130022,
+            name = "Youhou",
+            summary = "Youhouu the game!",
+            totalRating = 86.0,
+
+            genreIds = listOf(10),
+            genreNames = listOf("Racing"),
+
+            plateformIds = listOf(14, 39),
+            plateformsNames = listOf("Mac", "Linux"),
+            plateformsLogoIds = listOf(2, 3),
+            plateformsLogoUrl = listOf(
+                "//images.igdb.com/logo_mac.png", "//images.igdb.com/logo_linux.png"
+            )
         )
     )
 
-    LoadScreen(testGames, testCovers, testGenres, PaddingValues.Zero) {}
+    LoadScreen(
+        testGames, PaddingValues.Zero
+    ) {}
 }

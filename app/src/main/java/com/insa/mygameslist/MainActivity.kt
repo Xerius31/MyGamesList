@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import com.insa.mygameslist.data.IGDB
 import com.insa.mygameslist.data.IGDBCovers
 import com.insa.mygameslist.data.IGDBGames
 import com.insa.mygameslist.data.IGDBGenres
@@ -38,11 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        IGDBGames.load(this)
-        IGDBCovers.load(this)
-        IGDBGenres.load(this)
-        IGDBPlatforms.load(this)
-        IGDBPlatformsLogo.load(this)
+        IGDB.load(this)
 
         enableEdgeToEdge()
 
@@ -69,9 +66,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxSize()
                             ) { innerPadding ->
                                 LoadScreen(
-                                    games = IGDBGames.games.values.toList(),
-                                    covers = IGDBCovers.covers,
-                                    genres = IGDBGenres.genres,
+                                    games = IGDB.games.values.toList(),
                                     innerPadding = innerPadding,
                                     onClick = { gameId ->
                                         backStack.add(GameDetails(gameId))
@@ -81,7 +76,7 @@ class MainActivity : ComponentActivity() {
 
                         // GAME DETAILS SCREEN
                         entry<GameDetails> { key ->
-                            val game = IGDBGames.games[key.gameId]
+                            val game = IGDB.games[key.gameId]
 
                             Scaffold(
                                 topBar = {
@@ -106,10 +101,6 @@ class MainActivity : ComponentActivity() {
                             ) { innerPadding ->
                                 GameDetailsPannel(
                                     game = game,
-                                    covers = IGDBCovers.covers,
-                                    genres = IGDBGenres.genres,
-                                    platforms = IGDBPlatforms.platforms,
-                                    platformsLogo = IGDBPlatformsLogo.platformsLogo,
                                     innerPadding = innerPadding
                                 )
                             }
