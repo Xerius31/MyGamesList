@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,15 +24,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.insa.mygameslist.data.IGDB
-import com.insa.mygameslist.data.IGDBCovers
-import com.insa.mygameslist.data.IGDBGames
-import com.insa.mygameslist.data.IGDBGenres
-import com.insa.mygameslist.data.IGDBPlatforms
-import com.insa.mygameslist.data.IGDBPlatformsLogo
 import com.insa.mygameslist.ui.GameDetails
 import com.insa.mygameslist.ui.GameDetailsPannel
 import com.insa.mygameslist.ui.Home
 import com.insa.mygameslist.ui.LoadScreen
+import com.insa.mygameslist.ui.SimpleSearchBar
 import com.insa.mygameslist.ui.theme.MyGamesListTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +44,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             val backStack = remember { mutableStateListOf<Any>(Home) }
 
+            val searchText = rememberTextFieldState()
+            val searchResults = IGDB.games.values.filter { game ->
+                game.name.contains(
+                    searchText.text.toString(), ignoreCase = true
+                ) || game.genreNames.any {
+                    it.contains(
+                        searchText.text.toString(),
+                        ignoreCase = true
+                    )
+                } || game.plateformsNames.any {
+                    it.contains(searchText.text.toString(), ignoreCase = true)
+                }
+            }
+
             MyGamesListTheme {
                 NavDisplay(
                     backStack = backStack,
@@ -56,17 +68,25 @@ class MainActivity : ComponentActivity() {
                         entry<Home> {
                             Scaffold(
                                 topBar = {
-                                    TopAppBar(
-                                        colors = topAppBarColors(
-                                            containerColor = Color.Magenta,
-                                            titleContentColor = Color.Black
-                                        ), title = { Text("My Games List") })
+                                    Row {
+                                        TopAppBar(
+                                            colors = topAppBarColors(
+                                                containerColor = Color.Magenta,
+                                                titleContentColor = Color.Black
+                                            ), title = {
+                                                SimpleSearchBar(
+                                                    textFieldState = searchText,
+                                                    onSearch = {},
+                                                    searchResults = searchResults.map { it.name },
+                                                )
+                                            })
+                                    }
                                 },
                                 contentWindowInsets = WindowInsets.systemBars,
                                 modifier = Modifier.fillMaxSize()
                             ) { innerPadding ->
                                 LoadScreen(
-                                    games = IGDB.games.values.toList(),
+                                    games = searchResults,
                                     innerPadding = innerPadding,
                                     onClick = { gameId ->
                                         backStack.add(GameDetails(gameId))
@@ -100,8 +120,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.fillMaxSize()
                             ) { innerPadding ->
                                 GameDetailsPannel(
-                                    game = game,
-                                    innerPadding = innerPadding
+                                    game = game, innerPadding = innerPadding
                                 )
                             }
                         }

@@ -28,10 +28,14 @@ import com.insa.mygameslist.data.GameComplete
 fun LoadScreen(
     games: List<GameComplete>, innerPadding: PaddingValues, onClick: (Long) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.padding(innerPadding)) {
-        items(games) { game ->
-            GameItem(game, onClick)
-            HorizontalDivider(Modifier.fillMaxWidth(), 3.dp)
+    if (games.isEmpty()) {
+        Text("No Match :(")
+    } else {
+        LazyColumn(modifier = Modifier.padding(innerPadding)) {
+            items(games) { game ->
+                GameItem(game, onClick)
+                HorizontalDivider(Modifier.fillMaxWidth(), 3.dp)
+            }
         }
     }
 }
