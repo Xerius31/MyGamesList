@@ -51,5 +51,8 @@ data class GameComplete(
     val plateformsNames: List<String>,
     // PlateformsLogo
     val plateformsLogoIds: List<Long>,
-    val plateformsLogoUrl: List<String>
+    val plateformsLogoUrl: List<String>,
+
+    // favori
+    var isFavori: Boolean = false
 )

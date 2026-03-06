@@ -1,14 +1,22 @@
 package com.insa.mygameslist.ui
 
+import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -39,12 +47,23 @@ fun GameDetailsPannel(
                 contentDescription = null,
                 alignment = Alignment.TopCenter
             )
-            Text(
-                game.name,
-                fontWeight = FontWeight.Bold,
-                textDecoration = TextDecoration.Underline,
-                fontSize = 20.sp
-            )
+            Row {
+                Text(
+                    game.name,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration = TextDecoration.Underline,
+                    fontSize = 20.sp
+                )
+                var isFavori by remember { mutableStateOf(game.isFavori) }
+                Image(
+                    painter = painterResource(id = if (isFavori) R.drawable.ic_star_full else R.drawable.ic_star_empty),
+                    contentDescription = if (isFavori) "favori" else "non favori",
+                    modifier = Modifier.clickable {
+                        isFavori = !isFavori
+                        game.isFavori = isFavori
+                    })
+            }
+
             Text(
                 game.genreNames.joinToString(","),
                 modifier = Modifier.fillMaxWidth(),
