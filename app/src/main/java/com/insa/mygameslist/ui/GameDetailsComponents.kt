@@ -1,6 +1,5 @@
 package com.insa.mygameslist.ui
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -96,7 +95,7 @@ fun GameDetailsPannel(
                     }
                 }
             }
-            Text(game.summary)
+            Text(game.summary ?: "no description available")
         }
     } ?: Text("Error 404 : No Game Found")
 }
