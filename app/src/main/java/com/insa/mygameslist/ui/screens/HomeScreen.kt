@@ -34,7 +34,7 @@ fun HomeScreen(
                         SimpleSearchBar(
                             textFieldState = searchTextState,
                             onSearch = {},
-                            searchResults = games.map { it.name },
+                            searchResults = games.take(50).map { it.name },
                         )
                     })
             }
