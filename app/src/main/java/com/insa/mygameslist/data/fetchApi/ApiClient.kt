@@ -1,4 +1,4 @@
-package com.insa.mygameslist.data.restApi
+package com.insa.mygameslist.data.fetchApi
 
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -12,7 +12,7 @@ object ApiClient {
     private val logging: HttpLoggingInterceptor by lazy {
         HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
     }
-    
+
     private val httpClient: OkHttpClient by lazy {
         OkHttpClient.Builder().addInterceptor(logging).build()
     }

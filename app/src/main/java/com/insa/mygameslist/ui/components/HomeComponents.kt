@@ -1,4 +1,4 @@
-package com.insa.mygameslist.ui
+package com.insa.mygameslist.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,19 +33,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.insa.mygameslist.R
-import com.insa.mygameslist.data.GameComplete
+import com.insa.mygameslist.domain.model.Game
+import com.insa.mygameslist.ui.theme.MyGamesListTheme
 
 @Composable
 fun LoadScreen(
-    games: List<GameComplete>, innerPadding: PaddingValues, onClick: (Long) -> Unit
+    games: List<Game>,
+    innerPadding: PaddingValues,
+    onClick: (Long) -> Unit,
+    onLoadNextPage: () -> Unit
 ) {
     if (games.isEmpty()) {
-        Text("No Match :(")
+        Text("No Match :(", modifier = Modifier.padding(innerPadding))
     } else {
-        LazyColumn(modifier = Modifier.padding(innerPadding)) {
-            items(games) { game ->
+        val listState = rememberLazyListState()
+
+        // detecte quand on arrive vers la fin de la page
+        val nearOfTheEnd = remember {
+            derivedStateOf {
+                val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                lastVisibleItem != null && lastVisibleItem.index >= listState.layoutInfo.totalItemsCount - 5
+            }
+        }
+
+        LaunchedEffect(nearOfTheEnd.value) {
+            if (nearOfTheEnd.value) {
+                onLoadNextPage()
+            }
+        }
+
+        LazyColumn(
+            state = listState, modifier = Modifier.padding(innerPadding)
+        ) {
+            items(items = games, key = { it.id }, contentType = { "game_item" }) { game ->
                 GameItem(game, onClick)
-                HorizontalDivider(Modifier.fillMaxWidth(), 3.dp)
+                HorizontalDivider(Modifier.fillMaxWidth(), 1.dp)
             }
         }
     }
@@ -50,27 +75,31 @@ fun LoadScreen(
 
 @Composable
 fun GameItem(
-    game: GameComplete, onClick: (Long) -> Unit
+    game: Game, onClick: (Long) -> Unit,
 ) {
+    // pré-calcul des strings
+    val genresText = remember(game.genreNames) { "Genres : ${game.genreNames.joinToString(", ")}" }
+    val imageUrl =
+        remember(game.coverUrl) { if (game.coverUrl != null) "https:${game.coverUrl}" else null }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clickable { onClick(game.id) }
             .fillMaxWidth()
-            .padding(4.dp)
-    ) {
+            .padding(vertical = 32.dp, horizontal = 16.dp)) {
         AsyncImage(
-            model = "https:${game.coverUrl}",
+            model = imageUrl,
             placeholder = painterResource(R.drawable.cover_placeholder),
             error = painterResource(R.drawable.cover_placeholder),
             contentDescription = null,
-            modifier = Modifier.size(64.dp) // taille fixe pour éviter cropping
+            modifier = Modifier.size(80.dp)
         )
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         Column(
-            modifier = Modifier.weight(1f) // prend tout l'espace disponible
+            modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = game.name,
@@ -81,74 +110,68 @@ fun GameItem(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "Genres : ${game.genreNames.joinToString(", ")}",
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1
+                text = genresText, fontSize = 16.sp, overflow = TextOverflow.Ellipsis, maxLines = 1
             )
         }
 
-        var isFavori by remember { mutableStateOf(game.isFavori) }
+        var isFavorite by remember { mutableStateOf(game.isFavorite) }
 
         Image(
-            painter = painterResource(id = if (isFavori) R.drawable.ic_star_full else R.drawable.ic_star_empty),
-            contentDescription = if (isFavori) "favori" else "non favori",
+            painter = painterResource(id = if (isFavorite) R.drawable.ic_star_full else R.drawable.ic_star_empty),
+            contentDescription = if (isFavorite) "favorite" else "not favorite",
             modifier = Modifier
-                .size(24.dp)
+                .size(32.dp)
+                .padding(4.dp)
                 .clickable {
-                    isFavori = !isFavori
-                    game.isFavori = isFavori
-                }
-        )
+                    isFavorite = !isFavorite
+                    game.isFavorite = isFavorite
+                })
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
 fun HomePreview() {
-
     val testGames = listOf(
-        GameComplete(
+        Game(
             id = 25910,
-            coverId = 18872,
             coverUrl = "//images.igdb.com/igdb/image/upload/t_cover_big/it58smbpvhqhbbubqsj5.jpg",
             firstReleaseDate = 1478131200,
             name = "Mallow Drops",
             summary = "Mallow Drops is a gravity puzzle where two kiwis regather their eggs...",
             totalRating = 96.0,
 
-            genreIds = listOf(9, 32),
             genreNames = listOf("Puzzle", "Indie"),
 
-            plateformIds = listOf(6, 14, 39),
-            plateformsNames = listOf("PC", "Mac", "Linux"),
-            plateformsLogoIds = listOf(1, 2, 3),
-            plateformsLogoUrl = listOf(
+            platformsNames = listOf("PC", "Mac", "Linux"),
+            platformsLogoUrl = listOf(
                 "//images.igdb.com/logo_pc.png",
                 "//images.igdb.com/logo_mac.png",
                 "//images.igdb.com/logo_linux.png"
             )
-        ), GameComplete(
+        ), Game(
             id = 1,
-            coverId = 19438,
             coverUrl = "//images.igdb.com/igdb/image/upload/t_cover_big/ul5wwtyyqzh06j98agmx.jpg",
             firstReleaseDate = 1478130022,
             name = "Youhou",
             summary = "Youhouu the game!",
             totalRating = 86.0,
 
-            genreIds = listOf(10),
             genreNames = listOf("Racing"),
 
-            plateformIds = listOf(14, 39),
-            plateformsNames = listOf("Mac", "Linux"),
-            plateformsLogoIds = listOf(2, 3),
-            plateformsLogoUrl = listOf(
+            platformsNames = listOf("Mac", "Linux"),
+            platformsLogoUrl = listOf(
                 "//images.igdb.com/logo_mac.png", "//images.igdb.com/logo_linux.png"
             )
         )
     )
 
-    LoadScreen(
-        testGames, PaddingValues.Zero
-    ) {}
+    MyGamesListTheme {
+        LoadScreen(
+            games = testGames,
+            innerPadding = PaddingValues.Zero,
+            onClick = {},
+            onLoadNextPage = {})
+    }
 }

@@ -1,53 +1,111 @@
-# Projet Programmation Mobile - INSA 3INFO (2025/2026)
+# MyGamesList - Projet Programmation Mobile
 
-## Détails du projet
+- **Corentin PITON *(4INFO)***
+- **Mélissa BOKO *(3INFO)***
 
-- **Cours** : Programmation Mobile
+Les consignes du projet ont été déplacées dans le
+fichier [consignes_README.md](./consignes_README.md)
 
-## Calendrier du module
-- **26/01/2026** : ouverture des choix d'exposés sur Moodle (fin de journée)
-- **30/01/2026** : début du module
-- **09/02/2026** : fin des choix d'exposés (vous devez être incsrit pour le 09 au soir, 23:59 dernier délai)
-- **29/03/2026** : rendu du projet avant minuit (timestamp d'upload sur moodle faisant foi)
-- **03/04/2026** : rendu des slides des exposés avant 13:30 (timestamp d'upload sur Moodle faisant foi)
-- **03/04/2026** : exposés (tout le monde assiste à tous les exposés)
+---
 
-## Informations
+## Présentation du Projet
 
-### Projet
-Le projet compte pour ***16*** points sur 20.
-Si vous terminez les TP obligatoires du projet, vous vous assurez un 8/16, même si tous les cas ne sont pas pris en compte.  
-Le fichier README.md de votre projet doit contenir les bonus que vous avez réalisés, ainsi que vos noms au cas où vous auriez travaillé en binôme.
-La qualité de votre code, son architecture, la compilation, les warnings, les commits, les bonus... sont une partie des critères de notation.
+Le projet implémente les fonctionnalités décrites dans les TP obligatoires (listage des jeux,
+second écran, barre de recherche, favoris).
 
-Le livrable doit être une __archive__ uploadée sur Moodle.  
-Celle-ci doit être faite de telle manière qu'une fois désarchivée, le projet est ouvrable et lançable tel quel via Android Studio (ce point fait ***aussi*** partie de la note). L'archive doit porter le nom des personnes ayant participés au projet. Merci de ***NE PAS*** inclure le répertoire *build* dans vos archives.  
+## Pré-requis
 
-La structure du projet qui vous a servi de base peut vous servir d'exemple au besoin.
+Pour faire fonctionner l'application, il faut tout d'abord renseigner vos identifiants dans [/data/fetchApi/ApiService](./app/src/main/java/com/insa/mygameslist/data/fetchApi/ApiService.kt)
 
-### Exposé
+```kotlin
+interface ApiService {
+    @Headers(
+        "Client-ID: [client-id]",
+        "Authorization: Bearer [access-token]",
+        "Content-Type: application/json",
+    )
+    @POST("games")
+    suspend fun getGames(@Body query: RequestBody): Response<List<GameDTO>>
+}
+````
 
-L'exposé compte pour ***4*** points sur 20.
-Celui-ci dure 10 minutes au total. 7 minutes d'exposés et 3 minutes de question.  
-Vous ***NE POURREZ PAS*** durer plus de 7 minutes car le créneau horaire (4 heures) est juste ce qu'il faut.
-Merci néanmoins de numérotez les slides / pages / étapes de votre présentation afin de faciliter les questions.
+## Fonctionnalités Bonus réalisées
 
-La notation inclue (non-exhaustif) :
-- votre compréhension du sujet
-- la tenue de la durée imposée
-- la qualité de l'exposé
+* Les jeux récupérés et listés sont obtenus via l'API IGDB (*TP facultatif*)
 
-## Encadrants
+    * Pour cela, les jeux sont récupérés via des requêtes HTTP POST avec en body :
 
-### Kilian Lamberdière
-LinkedIn : https://fr.linkedin.com/in/kilian-lamberdiere-63605a28/
-### Nicolas Charpentier
-LinkedIn : https://fr.linkedin.com/in/nicolas-c-4a4723141/
-### Jérôme Decouenne
-LinkedIn : https://fr.linkedin.com/in/j%C3%A9r%C3%B4me-decouenne-338a2767
+      ```kotlin
+      "fields id, first_release_date, name, summary, total_rating, genres.name, cover.url, platforms.name, platforms.platform_logo.url; limit $pageSize; offset ${pageSize * page};"
+      ```
 
-## Point d'attention sur l'utilisation d'IA
+      Les `genres.name`, `cover.url`, `platforms.name` et `platforms.platform_logo.url` permettent
+      d’effectuer les jointures avec les autres tables de l'API.
 
-Tout ce projet est réalisable en un seul prompt (ça a été testé).  
-Il n'y a aucun problème à ce que vous utilisiez une IA pour vous aider à saisir les concepts explorés durant ce module.  
-Le travail rendu, néanmoins, doit être le vôtre et non la génération d'une IA. Tout code rendu ayant été réalisé par IA occasionnera un malus pouvant aller jusqu'à porter la note à 0.
+    * Un système de pagination a été mis en place : chaque page contient 100 jeux.
+
+    * La recherche de jeux est réalisée via des requêtes HTTP grâce au body :
+
+      ```kotlin
+      "where name ~ *\"$query\"* | genres.name ~ *\"$query\"* | platforms.name ~ *\"$query\"*;"
+      ```
+
+      L'attribut `search` de IGDB ne permet que de chercher dans le nom (le `~` permet d'être
+      *case-insensitive*).
+
+* Un scroll infini a été réalisé : quand l'utilisateur approche de la fin de la liste de jeux, une
+  requête est envoyée à l'API pour récupérer la suite des jeux.
+
+* *Clean Architecture* : une "clean architecture" a été réalisée après le dernier TP, la structure
+  du projet est la suivante :
+
+    * `domain/` : Logique métier (modèle utilisé par l'UI, interface pour le repository implémenté
+      dans `data/` et utilisé par l'UI, et des "use cases" permettant d'appeler les méthodes du
+      repository (classes avec `invoke` pour être appelées comme des fonctions par l'UI)).
+
+    * `data/` : Sources de données (API, repository, DTO).
+
+        * `GameComplete` : data class permettant de regrouper les données des DTO
+        * `DataSource` : interface implémentée par `IGDBApi` et `IGDBLocal` permettant de récupérer
+          les données (selon une page, ou permettant la recherche textuelle)
+        * `mapper` : contient une extension/fonction de `GameComplete` pour transformer un
+          `GameComplete` en objet `Game` de `domain/` (partagé avec l'UI)
+        * `GameRepositoryImpl` : est une implémentation de l'interface de repository de `domain/`
+          (permet d'appeler les méthodes d'une `DataSource` choisie)
+
+    * `ui/` : Éléments graphiques (screens, ViewModels, thèmes, composants).
+
+        * `screens/` : Les différents écrans (page d'accueil avec tous les jeux et page de
+          détails d'un jeu)
+        * `components/` : des composants (parties de la page d'accueil et de la page de détails),
+          mais contient des previews (`@Preview`)
+        * `viewmodel/` : contient le ViewModel du `MainActivity` et sa factory associée (la factory
+          permet de créer le ViewModel à partir des "use cases" : fonction de récupération des jeux
+          et de recherche).
+          *Exemple de l'initialisation par la factory avec l'API d'IGDB*
+
+          ```kotlin
+          private val viewModel: MainViewModel by viewModels {
+            val repository = GameRepositoryImpl(applicationContext, IGDBApi())
+            MainViewModelFactory(
+                GetGamesUseCase(repository), SearchGamesUseCase(repository)
+            )
+          }
+          ```
+
+## Utilisation de l'IA
+
+L'IA (*ChatGPT/Gemini*) n'a pas été utilisée dans le projet lors des TP obligatoires, ni pour la
+récupération des données via l'API d'IGDB.
+
+Mais elle a été utilisée pour aider à réaliser la clean architecture : indiquer quelle structure le
+projet doit avoir : `domain/`, `data/`, `ui/` et comment fonctionnent les ViewModels et les autres
+composants (quand faire passer en paramètres les use cases / repository / data sources / etc.).
+Aussi, cela a permis d’indiquer comment faire communiquer les ViewModels avec l'UI (utilisation
+des `MutableStateFlow` et `StateFlow` que l'UI lit et affiche ; cela aurait pu être fait avec des
+callbacks aussi).
+
+Enfin, elle a aidé à réaliser le scroll infini (la fonction pour appeler automatiquement la
+DataSource quand on arrive vers la fin) ainsi que le thème / la mise en page de l'écran de détails
+du jeu (plutôt que d'avoir juste un fond rose fuchsia).
+

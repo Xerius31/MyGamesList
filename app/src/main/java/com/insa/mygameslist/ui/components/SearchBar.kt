@@ -1,4 +1,4 @@
-package com.insa.mygameslist.ui
+package com.insa.mygameslist.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -24,7 +24,6 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleSearchBar(
@@ -33,7 +32,6 @@ fun SimpleSearchBar(
     searchResults: List<String>,
     modifier: Modifier = Modifier
 ) {
-    // Controls expansion state of the search bar
     var expanded by rememberSaveable { mutableStateOf(false) }
 
     Box(
@@ -58,13 +56,11 @@ fun SimpleSearchBar(
                     },
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
-                    placeholder = { Text("Search") }
-                )
+                    placeholder = { Text("Search") })
             },
             expanded = expanded,
             onExpandedChange = { expanded = it },
         ) {
-            // Display search results in a scrollable column
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 searchResults.ifEmpty {
                     ListItem(
